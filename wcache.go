@@ -39,7 +39,7 @@ func NewGroup(name string, cacheBytes int64, getter Getter) *Group {
 	g := &Group{
 		name:      name,
 		getter:    getter,
-		mainCache: *NewCache(cacheBytes, &sync.Mutex{}),
+		mainCache: *NewCache(nil, cacheBytes),
 	}
 	groups[name] = g
 	return g
@@ -48,7 +48,7 @@ func NewGroup(name string, cacheBytes int64, getter Getter) *Group {
 // GetGroup returns the named group previously created with NewGroup, or
 // nil if there's no such group.
 // GetGroup 返回指定名称的Group
-func GetGroup(name string) *Group {
+func GetGroup(name string) IGroup {
 	mu.RLock()
 	defer mu.RUnlock()
 	g := groups[name]
@@ -84,4 +84,8 @@ func (g *Group) getlocally(key string) (ByteView, error) {
 
 func (g *Group) populateCache(key string, value ByteView) {
 	g.mainCache.Add(key, value)
+}
+
+type IGroup interface {
+	Get(key string) (ByteView, error)
 }

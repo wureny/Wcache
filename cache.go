@@ -17,7 +17,6 @@ type Cache struct {
 func NewCache(l *lru.Cache, maxBytes int64) *Cache {
 	return &Cache{
 		lru:        l,
-		mu:         &sync.Mutex{},
 		cacheBytes: maxBytes,
 	}
 }
