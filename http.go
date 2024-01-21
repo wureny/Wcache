@@ -54,5 +54,6 @@ func (p *HTTPPool) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Write(val.ByteSlice())
+	//val.b是一个[]byte，所以可以直接写入，不会影响到原来的值，因为是值传递
+	w.Write(val.b)
 }
