@@ -11,6 +11,12 @@ type httpGetter struct {
 	baseURL string
 }
 
+func NewHTTPGetter(baseURL string) *httpGetter {
+	return &httpGetter{
+		baseURL: baseURL,
+	}
+}
+
 func (h httpGetter) Get(group string, key string) ([]byte, error) {
 	u := fmt.Sprintf(
 		"%v%v/%v",

@@ -1,4 +1,4 @@
-package Wcache
+package consistenthash
 
 import (
 	"hash/crc32"
@@ -9,7 +9,7 @@ import (
 type Hash func(data []byte) uint32
 
 // 一致性哈希算法的实现
-type Map struct {
+type ConsistentHashMap struct {
 	hash Hash
 	// 虚拟节点倍数
 	replicas int
@@ -17,11 +17,11 @@ type Map struct {
 	hashMap  map[int]string
 }
 
-func New(replicas int, fn Hash) *Map {
+func New(replicas int, fn Hash) *ConsistentHashMap {
 	if fn == nil {
 		fn = crc32.ChecksumIEEE
 	}
-	return &Map{
+	return &ConsistentHashMap{
 		hash:     fn,
 		replicas: replicas,
 		keys:     nil,
@@ -29,7 +29,7 @@ func New(replicas int, fn Hash) *Map {
 	}
 }
 
-func (m *Map) Add(keys ...string) {
+func (m *ConsistentHashMap) Add(keys ...string) {
 	for _, key := range keys {
 		// 每个真实节点创建m.replicas个虚拟节点
 		for i := 0; i < m.replicas; i++ {
@@ -44,7 +44,7 @@ func (m *Map) Add(keys ...string) {
 	sort.Ints(m.keys)
 }
 
-func (m *Map) Get(key string) string {
+func (m *ConsistentHashMap) Get(key string) string {
 	if len(m.keys) == 0 {
 		return ""
 	}
