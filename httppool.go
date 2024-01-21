@@ -24,8 +24,13 @@ type HTTPPool struct {
 }
 
 func (p *HTTPPool) PickPeer(key string) (peer PeerGetter, ok bool) {
-	//TODO implement me
-	panic("implement me")
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if peer := p.peers.Get(key); peer != "" && peer != p.self {
+		p.Log("Pick peer %s", peer)
+		return p.httpGetters[peer], true
+	}
+	return nil, false
 }
 
 func (p *HTTPPool) Set(peers ...string) {
