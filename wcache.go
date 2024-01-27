@@ -2,6 +2,7 @@ package Wcache
 
 import (
 	"errors"
+	"github.com/wuerny/Wcache/package/singleflight"
 	"sync"
 )
 
@@ -23,6 +24,7 @@ type Group struct {
 	getter    Getter
 	mainCache Cache
 	peers     PeerPicker
+	loader    *singleflight.Group
 }
 
 var (
@@ -48,6 +50,7 @@ func NewGroup(name string, cacheBytes int64, getter Getter) *Group {
 		name:      name,
 		getter:    getter,
 		mainCache: *NewCache(nil, cacheBytes),
+		loader:    &singleflight.Group{},
 	}
 	groups[name] = g
 	return g
@@ -75,14 +78,20 @@ func (g *Group) Get(key string) (ByteView, error) {
 
 func (g *Group) load(key string) (ByteView, error) {
 	//分布式场景下，load函数会调用getFromPeer而非getlocally
-	if g.peers != nil {
-		if peer, ok := g.peers.PickPeer(key); ok {
-			if value, err := g.getFromPeer(peer, key); err == nil {
-				return value, nil
+	v, err := g.loader.Do(key, func() (any, error) {
+		if g.peers != nil {
+			if peer, ok := g.peers.PickPeer(key); ok {
+				if value, err := g.getFromPeer(peer, key); err == nil {
+					return value, nil
+				}
 			}
 		}
+		return g.getlocally(key)
+	})
+	if err != nil {
+		return ByteView{}, err
 	}
-	return g.getlocally(key)
+	return v.(ByteView), nil
 }
 
 func (g *Group) getlocally(key string) (ByteView, error) {
